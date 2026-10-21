@@ -1,0 +1,1085 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<title>Красная площадь 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Красная площадь в реальном масштабе: интерактивная 3D-модель и путеводитель по главной площади Москвы.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Unbounded:wght@500;700;800&display=swap">
+<style>
+:root{
+  /* Layout: чёрная страница, красный квадрат как знак; 3D-модель — центральный экран, текст на сетке до 1240px, одна белая полоса для истории */
+  --ink:#0a0909;
+  --ink-2:#141212;
+  --line:#2c2525;
+  --fg:#f6f3f1;
+  --mute:#9b9291;
+  --red:#e3202a;
+  --white:#ffffff;
+  --black:#0a0909;
+  --glass:rgba(10,9,9,.78);
+  --glass-line:rgba(255,255,255,.14);
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"Golos Text","Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--ink);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ink);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--ink)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--f-mono);font-size:11.5px;line-height:1.6;letter-spacing:.08em;text-transform:uppercase}
+.sq{display:inline-block;width:12px;height:12px;background:var(--red);flex:none}
+
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--ink);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:60px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.nav nav{display:flex;gap:4px;flex-wrap:wrap}
+.nav nav a{text-decoration:none;font-size:14px;color:var(--mute);padding:8px 10px}
+.nav nav a:hover{color:var(--fg)}
+@media (max-width:620px){.nav nav a:not(.nav-cta){display:none}}
+.nav-cta{color:var(--fg)!important;background:var(--red)}
+
+.hero{padding-block:56px 32px}
+.hero-in{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:32px;align-items:end}
+.eyebrow{color:var(--mute);margin:0 0 20px;display:flex;align-items:center;gap:10px}
+h1{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:clamp(46px,9.6vw,148px);line-height:.88;letter-spacing:-.035em;margin:0;text-wrap:balance}
+h1 span{color:var(--red)}
+.lead{font-size:18px;line-height:1.55;margin:0 0 18px;max-width:36ch}
+.lead-sub{color:var(--mute);font-size:14px;margin:0;max-width:42ch}
+@media (max-width:820px){.hero{padding-block:36px 24px}.hero-in{grid-template-columns:1fr;gap:20px}}
+
+.viewer-band{padding-block:0 8px}
+.viewer{position:relative;height:clamp(480px,76vh,820px);background:var(--black);border:1px solid var(--line);overflow:hidden;user-select:none;-webkit-user-select:none}
+.viewer canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.viewer canvas:active{cursor:grabbing}
+.viewer canvas.hot{cursor:pointer}
+@media (max-width:620px){.viewer{height:540px}}
+.v-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:16px;padding:14px 16px;pointer-events:none;color:var(--fg);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.v-top p{margin:0;display:flex;align-items:center;gap:8px}
+@media (max-width:620px){.v-hint{display:none}}
+.v-bottom{position:absolute;left:0;right:0;bottom:0;padding:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between;pointer-events:none}
+.v-bottom>*{pointer-events:auto}
+.chips{display:flex;gap:6px;overflow-x:auto;max-width:100%;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip,.tool{font-family:var(--f-body);font-size:13px;line-height:1;background:var(--glass);border:1px solid var(--glass-line);color:var(--fg);padding:9px 11px;white-space:nowrap;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.chip:hover,.tool:hover{border-color:var(--red)}
+.chip[aria-pressed="true"],.tool[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--white)}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.panel{position:absolute;top:52px;right:16px;width:min(340px,calc(100% - 32px));max-height:calc(100% - 140px);overflow:auto;background:var(--ink-2);border:1px solid var(--line);border-top:3px solid var(--red);padding:18px 18px 16px}
+.panel h3{font-family:var(--f-display);font-weight:700;font-size:19px;line-height:1.2;margin:8px 0 6px;text-wrap:balance}
+.panel .p-year{color:var(--red);margin:0}
+.panel .p-meta{color:var(--mute);font-size:13px;margin:0 0 12px}
+.panel .p-text{font-size:14.5px;margin:0 0 12px}
+.panel .p-size{color:var(--mute);margin:0 0 14px}
+.panel-x{position:absolute;top:10px;right:10px;width:30px;height:30px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;font-size:16px;line-height:1}
+.panel-x:hover{border-color:var(--red)}
+.link-btn{background:none;border:0;padding:0;color:var(--fg);font:inherit;font-size:14px;text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:4px;cursor:pointer}
+@media (max-width:620px){.panel{top:auto;bottom:112px;left:12px;right:12px;width:auto;max-height:50%}}
+.tip{position:absolute;pointer-events:none;background:var(--red);color:var(--white);padding:6px 9px;transform:translate(14px,-130%);white-space:nowrap}
+.v-msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--mute);background:var(--black)}
+.v-legend{margin:10px 0 0;color:var(--mute);font-size:13px}
+
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;padding-block:56px}
+.fact{border-top:3px solid var(--red);padding-top:14px}
+.fact b{display:block;font-family:var(--f-display);font-weight:700;font-size:clamp(26px,3.4vw,40px);line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.fact span{display:block;color:var(--mute);font-size:14px;margin-top:8px;max-width:26ch}
+@media (max-width:820px){.facts{grid-template-columns:repeat(2,minmax(0,1fr));padding-block:40px}}
+
+.sec{padding-block:72px}
+.sec-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end;margin-bottom:36px}
+.sec-head h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:clamp(30px,5vw,60px);line-height:.95;letter-spacing:-.03em;margin:0;text-wrap:balance}
+.sec-head p{margin:0;color:var(--mute);max-width:46ch}
+.sec-head .mono{color:var(--red);margin:0 0 14px;display:block}
+@media (max-width:820px){.sec{padding-block:52px}.sec-head{grid-template-columns:1fr}}
+
+.objs{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.obj{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1.35fr) auto;gap:24px;align-items:start;padding-block:22px;border-bottom:1px solid var(--line)}
+.obj-year{color:var(--red);margin:3px 0 0}
+.obj h3{font-family:var(--f-display);font-weight:700;font-size:19px;line-height:1.2;margin:0 0 6px;text-wrap:balance}
+.obj-meta{color:var(--mute);font-size:13.5px;margin:0}
+.obj-text{margin:0;font-size:15px;max-width:62ch}
+.obj-btn{font-family:var(--f-body);font-size:13px;background:transparent;color:var(--fg);border:1px solid var(--line);padding:10px 12px;cursor:pointer;white-space:nowrap}
+.obj-btn:hover{background:var(--red);border-color:var(--red);color:var(--white)}
+@media (max-width:980px){.obj{grid-template-columns:110px minmax(0,1fr);gap:10px 20px}.obj-text{grid-column:2}.obj-btn{grid-column:2;justify-self:start}}
+@media (max-width:520px){.obj{grid-template-columns:1fr}.obj-text,.obj-btn{grid-column:1}}
+
+.band-white{background:var(--white);color:var(--black)}
+.band-white .sec-head p{color:#5e5655}
+.tl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px}
+.tl li{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding-block:16px;border-top:1px solid #e3dddc}
+.tl b{font-family:var(--f-display);font-weight:700;font-size:20px;color:var(--red);font-variant-numeric:tabular-nums;line-height:1.3}
+.tl span{font-size:15.5px}
+@media (max-width:820px){.tl{grid-template-columns:1fr}.tl li{grid-template-columns:96px minmax(0,1fr)}}
+
+.visit{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.card{background:var(--ink-2);border:1px solid var(--line);padding:24px}
+.card h3{font-family:var(--f-display);font-weight:700;font-size:17px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+.card ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.card li{font-size:15px}
+.card li small{display:block;color:var(--mute);font-size:13px}
+.card p{margin:0;font-size:15px}
+.card p+p{margin-top:10px;color:var(--mute);font-size:14px}
+@media (max-width:900px){.visit{grid-template-columns:1fr}}
+
+footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute);font-size:13px}
+.foot-in{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.foot-in p{margin:0;max-width:60ch}
+</style>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top"><span class="sq" aria-hidden="true"></span>Красная площадь</a>
+    <nav aria-label="Разделы">
+      <a href="#objects">Объекты</a>
+      <a href="#history">История</a>
+      <a href="#visit">Как добраться</a>
+      <a class="nav-cta" href="#model">3D-модель</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div>
+        <p class="eyebrow mono"><span class="sq" aria-hidden="true"></span>Москва · 55°45′14″ с. ш. 37°37′15″ в. д.</p>
+        <h1>Красная <span>площадь</span></h1>
+      </div>
+      <div>
+        <p class="lead">Главная площадь страны в масштабе 1:1. Триста тридцать метров брусчатки, башни Кремля высотой до 71 метра и собор Василия Блаженного.</p>
+        <p class="lead-sub">Облетите площадь, спуститесь на уровень глаз и посмотрите на неё ночью. Нажмите на здание, чтобы узнать его историю и размеры.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="model" class="viewer-band" aria-label="Интерактивная 3D-модель">
+    <div class="wrap">
+      <div class="viewer" id="viewer">
+        <canvas id="scene" aria-label="3D-модель Красной площади"></canvas>
+        <div class="v-top">
+          <p class="mono"><span class="sq" aria-hidden="true"></span><span id="clock">Масштаб 1:1</span></p>
+          <p class="v-hint mono">Тянуть — вращать · правой кнопкой — сдвиг · колесо — масштаб</p>
+        </div>
+        <aside class="panel" id="panel" hidden aria-live="polite">
+          <button class="panel-x" id="panelClose" type="button" aria-label="Закрыть">×</button>
+          <p class="p-year mono" id="pYear"></p>
+          <h3 id="pName"></h3>
+          <p class="p-meta" id="pMeta"></p>
+          <p class="p-text" id="pText"></p>
+          <p class="p-size mono" id="pSize"></p>
+          <button class="link-btn" id="pReset" type="button">Показать всю площадь</button>
+        </aside>
+        <div class="v-bottom">
+          <div class="chips" id="chips" role="group" aria-label="Объекты на модели"></div>
+          <div class="tools">
+            <button class="tool" id="tRotate" type="button" aria-pressed="true">Облёт</button>
+            <button class="tool" id="tEye" type="button">С уровня глаз</button>
+            <button class="tool" id="tNight" type="button" aria-pressed="false">Ночь</button>
+            <button class="tool" id="tReset" type="button">Сброс</button>
+          </div>
+        </div>
+        <div class="tip mono" id="tip" hidden></div>
+        <div class="v-msg mono" id="vMsg">Строим площадь…</div>
+      </div>
+      <p class="v-legend">Размеры и расстояния в метрах по открытым данным. Фасады и декор упрощены, люди на площади показаны для масштаба.</p>
+    </div>
+  </section>
+
+  <section class="wrap facts" aria-label="Цифры">
+    <div class="fact"><b>330 × 75 м</b><span>длина и ширина площади, около 24 700 м² брусчатки</span></div>
+    <div class="fact"><b>1493</b><span>Иван III велит расчистить место у стен Кремля, так появляется площадь</span></div>
+    <div class="fact"><b>71 м</b><span>высота Спасской башни вместе с рубиновой звездой</span></div>
+    <div class="fact"><b>1990</b><span>Кремль и Красная площадь внесены в список Всемирного наследия ЮНЕСКО</span></div>
+  </section>
+
+  <section id="objects" class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="mono">Маршрут с севера на юг</span>
+          <h2>Что стоит на площади</h2>
+        </div>
+        <p>Пройдите площадь от Воскресенских ворот до спуска к Москве-реке. Кнопка «На модели» перенесёт камеру к зданию.</p>
+      </div>
+      <ol class="objs" id="objList"></ol>
+    </div>
+  </section>
+
+  <section id="history" class="sec band-white">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="mono">Пять веков</span>
+          <h2>История площади</h2>
+        </div>
+        <p>Сначала площадь называли Торгом и Пожаром. Название «Красная», то есть «красивая», закрепилось во второй половине XVII века.</p>
+      </div>
+      <ol class="tl">
+        <li><b>1485–1495</b><span>Возведена кирпичная стена Кремля с башнями. В 1491 году построена Спасская (тогда Фроловская) башня.</span></li>
+        <li><b>1493</b><span>После пожаров Иван III приказывает снести постройки у стен. На их месте возникает торговая площадь.</span></li>
+        <li><b>1555–1561</b><span>Строится Покровский собор, который в народе зовут собором Василия Блаженного.</span></li>
+        <li><b>1624–1625</b><span>Спасская башня получает шатёр и часы мастера Христофора Галовея.</span></li>
+        <li><b>1786</b><span>Матвей Казаков перестраивает Лобное место в его нынешнем виде.</span></li>
+        <li><b>1818</b><span>Открыт памятник Минину и Пожарскому работы Ивана Мартоса.</span></li>
+        <li><b>1883</b><span>Исторический музей принимает первых посетителей.</span></li>
+        <li><b>1893</b><span>Открыты Верхние торговые ряды, нынешний ГУМ.</span></li>
+        <li><b>1930</b><span>Каменный мавзолей Алексея Щусева заменяет деревянный.</span></li>
+        <li><b>1937</b><span>На пяти башнях Кремля загораются рубиновые звёзды.</span></li>
+        <li><b>1990–1995</b><span>Площадь входит в список ЮНЕСКО. Казанский собор и Воскресенские ворота воссозданы.</span></li>
+        <li><b>Сегодня</b><span>Пешеходная площадь, место парадов, ярмарок и главного новогоднего катка.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="visit" class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="mono">Визит</span>
+          <h2>Как добраться</h2>
+        </div>
+        <p>Площадь пешеходная, вход свободный. Перед поездкой проверьте новости: на время мероприятий и подготовки к ним вход закрывают.</p>
+      </div>
+      <div class="visit">
+        <div class="card">
+          <h3><span class="sq" aria-hidden="true"></span>Метро</h3>
+          <ul>
+            <li>Охотный Ряд<small>линия 1, 5 минут пешком</small></li>
+            <li>Площадь Революции<small>линия 3, 5 минут пешком</small></li>
+            <li>Театральная<small>линия 2, 6 минут пешком</small></li>
+            <li>Китай-город<small>линии 6 и 7, 12 минут пешком</small></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><span class="sq" aria-hidden="true"></span>Когда идти</h3>
+          <p>Утром до 10 часов людей меньше всего. Вечером включается подсветка соборов, башен и гирлянды ГУМа, как в ночном режиме модели.</p>
+          <p>Собор Василия Блаженного, Исторический музей и Мавзолей работают по своему расписанию и требуют отдельного входа.</p>
+        </div>
+        <div class="card">
+          <h3><span class="sq" aria-hidden="true"></span>Рядом</h3>
+          <ul>
+            <li>Александровский сад<small>Могила Неизвестного Солдата и смена почётного караула</small></li>
+            <li>Парк «Зарядье»<small>Парящий мост над Москвой-рекой</small></li>
+            <li>Никольская улица<small>Пешеходная улица от Казанского собора</small></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <p>Красная площадь 3D. Модель построена прямо в браузере из геометрии и процедурных текстур, в масштабе 1:1.</p>
+    <p class="mono">Москва · Красная площадь</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Sky.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------- Данные объектов (маршрут с севера на юг). Координаты в метрах: x — поперёк площади (запад −), z — вдоль (север −) ---------- */
+var LM=[
+  {id:'museum',short:'Исторический музей',name:'Государственный исторический музей',year:'1875–1881',meta:'архитектор Владимир Шервуд',
+   text:'Краснокирпичное здание в русском стиле замыкает площадь с севера. Музей принял первых посетителей в 1883 году. Шатровые башни с позолоченными орлами перекликаются с башнями Кремля.',
+   size:'Высота башен до 45 м',t:[-6,20,-195],c:[48,32,-92]},
+  {id:'gate',short:'Воскресенские ворота',name:'Воскресенские ворота',year:'1680 · 1995',meta:'с Иверской часовней',
+   text:'Двойные ворота с двумя шатровыми башнями, парадный въезд на площадь со стороны Тверской. Снесены в 1931 году и восстановлены по чертежам в 1994–1995 годах.',
+   size:'Высота башен около 31 м',t:[34,14,-188],c:[78,20,-118]},
+  {id:'kazan',short:'Казанский собор',name:'Казанский собор',year:'1636 · 1993',meta:'на углу Никольской улицы',
+   text:'Небольшой храм в честь Казанской иконы Божией Матери. Разрушен в 1936 году и восстановлен в 1990–1993 годах по обмерам архитектора Петра Барановского.',
+   size:'Высота с крестом около 28 м',t:[57,12,-157],c:[8,16,-108]},
+  {id:'gum',short:'ГУМ',name:'ГУМ, Верхние торговые ряды',year:'1890–1893',meta:'архитектор Александр Померанцев',
+   text:'Фасад длиной 242 метра занимает всю восточную сторону площади. Стеклянные своды над торговыми линиями рассчитал инженер Владимир Шухов. Вечером контуры фасада горят гирляндами.',
+   size:'Фасад 242 м · глубина 88 м',t:[45,12,0],c:[-25,38,-115]},
+  {id:'kremlin',short:'Кремлёвская стена',name:'Кремлёвская стена и Сенат',year:'1485–1495',meta:'стена и башни · Сенат Матвея Казакова, 1776–1787',
+   text:'Кирпичная стена общей длиной 2235 метров с зубцами в форме ласточкина хвоста. За ней видны купол Сената с флагом, колокольня Ивана Великого и соборы Соборной площади. На Красную площадь выходят Никольская, Сенатская и Спасская башни.',
+   size:'Стена до 19 м · Иван Великий 81 м',t:[-90,20,40],c:[60,120,170]},
+  {id:'mausoleum',short:'Мавзолей',name:'Мавзолей Ленина',year:'1929–1930',meta:'архитектор Алексей Щусев',
+   text:'Ступенчатая пирамида из красного гранита, лабрадорита и чёрного габбро. Первый, деревянный мавзолей появился в 1924 году, каменный построен на его месте. По бокам вдоль стены стоят гостевые трибуны и голубые ели.',
+   size:'Длина фасада 24 м · высота 12 м',t:[-30,6,0],c:[16,13,30]},
+  {id:'spasskaya',short:'Спасская башня',name:'Спасская башня',year:'1491',meta:'Пьетро Антонио Солари · шатёр 1624–1625',
+   text:'Главная проездная башня Кремля. В XVII веке Бажен Огурцов и Христофор Галовей надстроили шатёр и установили часы. Нынешний механизм курантов сделан в 1851–1852 годах, рубиновая звезда горит с 1937 года. Стрелки на модели показывают текущее московское время.',
+   size:'Высота 71 м · циферблат 6,12 м',t:[-40,40,125],c:[34,30,68]},
+  {id:'lobnoe',short:'Лобное место',name:'Лобное место',year:'XVI век',meta:'каменное — 1786, Матвей Казаков',
+   text:'Круглый каменный помост, с которого объявляли царские указы и проводили церковные церемонии. Вопреки легенде, казни здесь проходили редко.',
+   size:'Диаметр 13 м',t:[-5,1,155],c:[16,11,134]},
+  {id:'minin',short:'Минин и Пожарский',name:'Памятник Минину и Пожарскому',year:'1818',meta:'скульптор Иван Мартос',
+   text:'Первый скульптурный памятник Москвы, поставлен в честь освобождения города в 1612 году. Сначала стоял в центре площади, в 1931 году перенесён к собору Василия Блаженного.',
+   size:'Высота около 8,8 м',t:[22,5,176],c:[2,7,163]},
+  {id:'basil',short:'Василий Блаженный',name:'Собор Василия Блаженного',year:'1555–1561',meta:'Покровский собор на Рву · зодчие Барма и Постник',
+   text:'Построен по приказу Ивана Грозного в честь взятия Казани. Девять храмов на одном основании: восемь глав вокруг центрального шатра, у каждой свой узор — спирали, ромбы и зигзаги.',
+   size:'Высота 65 м',t:[25,24,210],c:[-36,24,124]}
+];
+var IDX={};LM.forEach(function(l,i){IDX[l.id]=i;});
+var DEF={t:[5,12,20],c:[250,230,-400]};
+var EYE={t:[22,22,210],c:[-8,1.7,-118]};
+
+/* ---------- Список объектов на странице ---------- */
+var list=document.getElementById('objList'),chips=document.getElementById('chips');
+LM.forEach(function(l){
+  var li=document.createElement('li');li.className='obj';
+  li.innerHTML='<p class="obj-year mono">'+l.year+'</p><div><h3>'+l.name+'</h3><p class="obj-meta">'+l.meta+'</p></div><p class="obj-text">'+l.text+'</p><button class="obj-btn" type="button" data-lm="'+l.id+'">На модели →</button>';
+  list.appendChild(li);
+  var b=document.createElement('button');b.className='chip';b.type='button';b.textContent=l.short;b.dataset.lm=l.id;b.setAttribute('aria-pressed','false');
+  chips.appendChild(b);
+});
+list.addEventListener('click',function(e){
+  var b=e.target.closest('[data-lm]');if(!b)return;
+  document.getElementById('model').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  document.dispatchEvent(new CustomEvent('rs:select',{detail:b.dataset.lm}));
+});
+
+/* ---------- 3D ---------- */
+var viewer=document.getElementById('viewer'),canvas=document.getElementById('scene'),msg=document.getElementById('vMsg');
+function fail(t){msg.hidden=false;msg.textContent=t;}
+if(!window.THREE||!THREE.OrbitControls||!THREE.BufferGeometryUtils){fail('Не удалось загрузить 3D-движок. Проверьте подключение к интернету и обновите страницу.');return;}
+var renderer;
+try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,powerPreference:'high-performance'});}
+catch(e){fail('Ваш браузер не поддерживает WebGL, поэтому 3D-модель недоступна.');return;}
+setTimeout(init,30);
+
+function init(){
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var small=Math.min(screen.width,screen.height)<700;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,small?1.5:2));
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=0.62;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.physicallyCorrectLights=false;
+var ANISO=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+
+var scene=new THREE.Scene();
+var V3=THREE.Vector3;
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+var RND=rng(1493);
+
+/* ===== Процедурные текстуры ===== */
+function pair(w,h,fn){
+  var a=document.createElement('canvas'),b=document.createElement('canvas');a.width=b.width=w;a.height=b.height=h;
+  fn(a.getContext('2d'),b.getContext('2d'),w,h);return [a,b];
+}
+function one(w,h,fn){return pair(w,h,function(g,_,w,h){fn(g,w,h);})[0];}
+function T(c,srgb){var t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;if(srgb!==false)t.encoding=THREE.sRGBEncoding;t.anisotropy=ANISO;return t;}
+function speck(g,w,h,n,cols,s){for(var i=0;i<n;i++){g.fillStyle=cols[Math.floor(RND()*cols.length)];var z=(s||1)*(1+RND()*2);g.fillRect(RND()*w,RND()*h,z,z);}}
+function hsl(h,s,l){return 'hsl('+h+','+s+'%,'+l+'%)';}
+function grey(l){return 'hsl(0,0%,'+l+'%)';}
+var FLOOD=[];
+function mat(o,su,sv,flood){
+  var m=new THREE.MeshStandardMaterial(o);m.userData.su=su||4;
+  if(!o.metalness||o.metalness<0.5)m.envMapIntensity=0.45;m.userData.sv=sv||su||4;
+  if(flood){m.emissive=new THREE.Color(flood.color||0xffd2a0);if(flood.map)m.emissiveMap=flood.map;else if(o.map)m.emissiveMap=o.map;m.emissiveIntensity=0;FLOOD.push({m:m,n:flood.n});}
+  return m;
+}
+
+// кирпич: 4×4 м, кирпич 25×12,5 см
+var brickC=pair(512,512,function(g,b,w,h){
+  g.fillStyle='#a08a7e';g.fillRect(0,0,w,h);b.fillStyle='#000';b.fillRect(0,0,w,h);
+  for(var r=0;r<h/16;r++){var off=(r%2)*16;for(var c=-1;c<=w/32;c++){var x=c*32+off,y=r*16;
+    g.fillStyle=hsl(3+RND()*9,48+RND()*16,28+RND()*11);g.fillRect(x+1,y+1,30,14);
+    b.fillStyle=grey(65+RND()*25);b.fillRect(x+1,y+1,30,14);}}
+  speck(g,w,h,5000,['rgba(0,0,0,.13)','rgba(255,225,205,.07)','rgba(60,20,10,.15)']);
+});
+var stoneC=pair(256,256,function(g,b,w,h){
+  g.fillStyle='#e7e1d4';g.fillRect(0,0,w,h);b.fillStyle='#888';b.fillRect(0,0,w,h);
+  for(var y=0;y<h;y+=64){g.fillStyle='rgba(120,110,95,.25)';g.fillRect(0,y,w,1);b.fillStyle='#333';b.fillRect(0,y,w,2);}
+  speck(g,w,h,2500,['rgba(0,0,0,.06)','rgba(255,255,255,.12)','rgba(150,130,100,.08)']);
+});
+var cobC=pair(512,512,function(g,b,w,h){
+  var R=rng(42);g.fillStyle='#1d1d20';g.fillRect(0,0,w,h);b.fillStyle='#000';b.fillRect(0,0,w,h);
+  for(var y=0;y<h;y+=32){var x=0;while(x<w){var sw=24+Math.floor(R()*18);if(w-x-sw<22)sw=w-x;
+    var l=24+R()*16;g.fillStyle='hsl('+(210+R()*40)+','+(3+R()*7)+'%,'+l+'%)';g.fillRect(x+2,y+2,sw-4,28);
+    b.fillStyle=grey(55+R()*40);b.fillRect(x+2,y+2,sw-4,28);
+    g.fillStyle='rgba(255,255,255,.05)';g.fillRect(x+3,y+3,sw-8,6);x+=sw;}}
+  speck(g,w,h,3000,['rgba(0,0,0,.18)','rgba(255,255,255,.05)']);
+});
+function noiseC(base,cols,n,size){return one(256,256,function(g,w,h){g.fillStyle=base;g.fillRect(0,0,w,h);speck(g,w,h,n,cols,size);});}
+function seamC(base,line,step){return one(256,256,function(g,w,h){g.fillStyle=base;g.fillRect(0,0,w,h);for(var x=0;x<w;x+=step){g.fillStyle=line;g.fillRect(x,0,2,h);}speck(g,w,h,1500,['rgba(0,0,0,.08)','rgba(255,255,255,.06)']);});}
+
+// фасад ГУМа: одна ось 8 м × 18 м, 32 px/м
+function arch(g,x0,x1,y0,y1){var r=(x1-x0)/2;g.beginPath();g.moveTo(x0,y0);g.lineTo(x0,y1+r);g.arc(x0+r,y1+r,r,Math.PI,0);g.lineTo(x1,y0);g.closePath();}
+var gumC=pair(256,576,function(g,e,w,h){
+  function Y(m){return (18-m)*32;}function X(m){return m*32;}
+  g.fillStyle='#ddd4c4';g.fillRect(0,0,w,h);e.fillStyle='#000';e.fillRect(0,0,w,h);
+  speck(g,w,h,2500,['rgba(0,0,0,.05)','rgba(255,255,255,.1)','rgba(120,100,80,.05)']);
+  g.fillStyle='#cfc4b0';g.fillRect(0,0,12,h);g.fillRect(w-12,0,12,h);
+  g.fillStyle='#9f978b';g.fillRect(0,Y(0.5),w,16);
+  [[6,0.5,'#ebe5d8'],[12,0.45,'#ebe5d8'],[16.6,1.1,'#c9bea9']].forEach(function(b){g.fillStyle=b[2];g.fillRect(0,Y(b[0]+b[1]),w,b[1]*32);g.fillStyle='rgba(0,0,0,.18)';g.fillRect(0,Y(b[0]),w,2);});
+  function win(x0,x1,y0,y1,lit){
+    g.fillStyle='#e9e3d6';arch(g,X(x0)-5,X(x1)+5,Y(y0)+4,Y(y1)-5);g.fill();
+    g.fillStyle='#29323a';arch(g,X(x0),X(x1),Y(y0),Y(y1));g.fill();
+    g.strokeStyle='rgba(220,225,230,.35)';g.lineWidth=2;g.beginPath();g.moveTo((X(x0)+X(x1))/2,Y(y0));g.lineTo((X(x0)+X(x1))/2,Y(y1)-(X(x1)-X(x0))/2);g.stroke();
+    e.fillStyle=lit;arch(e,X(x0),X(x1),Y(y0),Y(y1));e.fill();
+  }
+  win(1.8,6.2,0.5,3.6,'#ffd28a');
+  win(1.4,3.4,7.2,9.6,'#ffcf86');win(4.6,6.6,7.2,9.6,'#e8b26a');
+  win(1.6,3.2,13,14.9,'#ffd79a');win(4.8,6.4,13,14.9,'#ffd28a');
+  // гирлянды по контурам
+  function dots(y){for(var x=4;x<w;x+=12){e.fillStyle='#fff3c8';e.fillRect(x,y-2,4,4);g.fillStyle='#bdb3a2';g.fillRect(x,y-1,3,3);}}
+  dots(Y(6.5));dots(Y(12.45));dots(Y(17.7));
+  for(var y=8;y<h;y+=12){e.fillStyle='#fff3c8';e.fillRect(4,y,4,4);e.fillRect(w-8,y,4,4);}
+});
+// фасад Исторического музея: ось 6 × 22 м
+function brickWall(g,w,h,col){g.fillStyle=col;g.fillRect(0,0,w,h);for(var y=0;y<h;y+=4){g.fillStyle='rgba(0,0,0,.08)';g.fillRect(0,y,w,1);}speck(g,w,h,3000,['rgba(0,0,0,.1)','rgba(255,200,180,.06)']);}
+var musC=pair(192,704,function(g,e,w,h){
+  function Y(m){return (22-m)*32;}function X(m){return m*32;}
+  brickWall(g,w,h,'#9b2f25');e.fillStyle='#000';e.fillRect(0,0,w,h);
+  g.fillStyle='#8f8a83';g.fillRect(0,Y(1.2),w,1.2*32);
+  [[9,0.5],[18,0.6]].forEach(function(b){g.fillStyle='#e9e2d4';g.fillRect(0,Y(b[0]+b[1]),w,b[1]*32);});
+  [[3.5,7.2],[11,15]].forEach(function(f){[[1.5,2.8],[3.2,4.5]].forEach(function(xx){
+    g.fillStyle='#ece5d7';arch(g,X(xx[0])-7,X(xx[1])+7,Y(f[0])+6,Y(f[1])-6);g.fill();
+    g.fillStyle='#2a2f35';arch(g,X(xx[0]),X(xx[1]),Y(f[0]),Y(f[1]));g.fill();
+    e.fillStyle=RND()<0.7?'#ffd08a':'#3a2a18';arch(e,X(xx[0]),X(xx[1]),Y(f[0]),Y(f[1]));e.fill();
+  });});
+  g.strokeStyle='#e9e2d4';g.lineWidth=6;for(var i=0;i<2;i++){g.beginPath();g.arc(X(1.5+i*3),Y(19.4),X(1.2),Math.PI,0);g.stroke();}
+});
+// фасад Сената: ось 6 × 22 м
+var senC=pair(192,704,function(g,e,w,h){
+  function Y(m){return (22-m)*32;}function X(m){return m*32;}
+  g.fillStyle='#e4c56f';g.fillRect(0,0,w,h);speck(g,w,h,2000,['rgba(0,0,0,.05)','rgba(255,255,255,.1)']);e.fillStyle='#000';e.fillRect(0,0,w,h);
+  g.fillStyle='#f1ece0';g.fillRect(0,0,14,h);g.fillRect(w-14,0,14,h);g.fillRect(0,Y(1.4),w,1.4*32);
+  [[8.5,0.5],[16,0.5],[21,1]].forEach(function(b){g.fillRect(0,Y(b[0]+b[1]),w,b[1]*32);});
+  [[3,7],[10.5,15],[17.4,19.6]].forEach(function(f){g.fillStyle='#f6f2e8';g.fillRect(X(2.1)-6,Y(f[1])-6,X(1.8)+12,(f[1]-f[0])*32+12);g.fillStyle='#2b3138';g.fillRect(X(2.1),Y(f[1]),X(1.8),(f[1]-f[0])*32);e.fillStyle=RND()<0.6?'#ffe0a8':'#000';e.fillRect(X(2.1),Y(f[1]),X(1.8),(f[1]-f[0])*32);});
+});
+var palC=pair(192,704,function(g,e,w,h){
+  function Y(m){return (22-m)*32;}function X(m){return m*32;}
+  g.fillStyle='#efe2c3';g.fillRect(0,0,w,h);speck(g,w,h,1500,['rgba(0,0,0,.05)']);e.fillStyle='#000';e.fillRect(0,0,w,h);
+  [[3,7.5],[10,15.5],[17,20]].forEach(function(f){g.fillStyle='#f8f4ea';arch(g,X(2)-6,X(4)+6,Y(f[0])+6,Y(f[1])-6);g.fill();g.fillStyle='#2b3138';arch(g,X(2),X(4),Y(f[0]),Y(f[1]));g.fill();e.fillStyle=RND()<0.5?'#ffe0a8':'#000';arch(e,X(2),X(4),Y(f[0]),Y(f[1]));e.fill();});
+});
+// фасад Казанского собора: 4 × 10 м
+var kazC=pair(128,320,function(g,e,w,h){
+  function Y(m){return (10-m)*32;}function X(m){return m*32;}
+  brickWall(g,w,h,'#a73a2c');e.fillStyle='#000';e.fillRect(0,0,w,h);
+  g.fillStyle='#efe9dd';g.fillRect(0,0,10,h);g.fillRect(w-10,0,10,h);g.fillRect(0,Y(8.4),w,14);g.fillRect(0,Y(0.8),w,0.8*32);
+  g.fillStyle='#efe9dd';arch(g,X(1.2)-6,X(2.8)+6,Y(3)+6,Y(6.2)-6);g.fill();g.fillStyle='#283039';arch(g,X(1.2),X(2.8),Y(3),Y(6.2));g.fill();
+  e.fillStyle='#ffcf8a';arch(e,X(1.2),X(2.8),Y(3),Y(6.2));e.fill();
+});
+// городская застройка: 32 × 28 м, 16 px/м
+var cityC=pair(512,448,function(g,e,w,h){
+  var R=rng(77);g.fillStyle='#d9d6d0';g.fillRect(0,0,w,h);speck(g,w,h,6000,['rgba(0,0,0,.05)','rgba(255,255,255,.08)']);
+  e.fillStyle='#000';e.fillRect(0,0,w,h);
+  for(var f=0;f<8;f++){var m=f*3.5;for(var c=0;c<8;c++){
+    var x=c*64+21,y=(28-(m+2.8))*16,hh=f===0?36:29,ww=f===0?30:22;if(f===0){x-=4;y=(28-3)*16;}
+    g.fillStyle='#f2efe9';g.fillRect(x-3,y-3,ww+6,hh+6);g.fillStyle='#3b434c';g.fillRect(x,y,ww,hh);
+    g.fillStyle='rgba(255,255,255,.12)';g.fillRect(x,y,ww,4);
+    if(R()<0.38){e.fillStyle=R()<0.5?'#ffcf8a':'#ffe6b8';e.fillRect(x,y,ww,hh);}
+  }
+  g.fillStyle='rgba(0,0,0,.07)';g.fillRect(0,(28-m)*16-2,w,2);}
+  g.fillStyle='#6a6866';g.fillRect(0,h-16,w,16);
+});
+function domeC(type,a,b){return one(256,256,function(g,w,h){
+  var img=g.createImageData(w,h),d=img.data,ca=new THREE.Color(a),cb=new THREE.Color(b);
+  for(var y=0;y<h;y++)for(var x=0;x<w;x++){
+    var on;
+    if(type==='swirl')on=((x+y*0.9)%64)<32;
+    else if(type==='zig')on=((y+Math.abs((x%32)-16))%28)<12;
+    else if(type==='check')on=(((x+y)%64)<32)!==(((x-y+256)%64)<32);
+    else if(type==='scale'){var cx=(x%32)-16,cy=(y%32);on=(cx*cx+(cy-((Math.floor(x/32)%2)*16))*(cy-((Math.floor(x/32)%2)*16)))<200;}
+    else on=(x%32)<16;
+    var c=on?ca:cb,k=0.92+Math.random()*0.1,i=(y*w+x)*4;
+    d[i]=Math.min(255,c.r*255*k);d[i+1]=Math.min(255,c.g*255*k);d[i+2]=Math.min(255,c.b*255*k);d[i+3]=255;
+  }
+  g.putImageData(img,0,0);
+  g.fillStyle='rgba(0,0,0,.25)';for(var i=0;i<w;i+=16)g.fillRect(i,0,1,h);
+});}
+var tentC=one(256,256,function(g,w,h){
+  g.fillStyle='#efe9dc';g.fillRect(0,0,w,h);g.lineWidth=5;
+  for(var i=-256;i<512;i+=64){g.strokeStyle='#b5392c';g.beginPath();g.moveTo(i,0);g.lineTo(i+256,h);g.stroke();g.strokeStyle='#2f7a55';g.beginPath();g.moveTo(i+256,0);g.lineTo(i,h);g.stroke();}
+  g.fillStyle='#d9a93a';for(var y=32;y<h;y+=64)for(var x=0;x<w;x+=64)g.fillRect(x-3,y-3,6,6);
+});
+var glassC=one(256,256,function(g,w,h){g.fillStyle='#9fb6bf';g.fillRect(0,0,w,h);g.fillStyle='#4b565d';for(var i=0;i<w;i+=32){g.fillRect(i,0,3,h);g.fillRect(0,i,w,2);}});
+var dialC=one(512,512,function(g,w,h){
+  var c=w/2;g.fillStyle='#0f1b33';g.beginPath();g.arc(c,c,c,0,7);g.fill();
+  g.strokeStyle='#e2b649';g.lineWidth=18;g.beginPath();g.arc(c,c,c-12,0,7);g.stroke();
+  g.lineWidth=4;g.beginPath();g.arc(c,c,c-60,0,7);g.stroke();
+  for(var i=0;i<60;i++){var a=i/60*Math.PI*2,r1=c-28,r2=i%5?c-42:c-56;g.lineWidth=i%5?3:7;g.beginPath();g.moveTo(c+Math.sin(a)*r1,c-Math.cos(a)*r1);g.lineTo(c+Math.sin(a)*r2,c-Math.cos(a)*r2);g.stroke();}
+  g.fillStyle='#e2b649';g.font='bold 44px Georgia,serif';g.textAlign='center';g.textBaseline='middle';
+  var N=['XII','I','II','III','IIII','V','VI','VII','VIII','IX','X','XI'];
+  for(var j=0;j<12;j++){var a2=j/12*Math.PI*2;g.save();g.translate(c+Math.sin(a2)*(c-105),c-Math.cos(a2)*(c-105));g.rotate(a2);g.fillText(N[j],0,0);g.restore();}
+  g.beginPath();g.arc(c,c,22,0,7);g.fill();
+});
+var plateC=one(512,128,function(g,w,h){g.fillStyle='#16171b';g.fillRect(0,0,w,h);g.fillStyle='#7d2a22';g.font='bold 84px "Times New Roman",serif';g.textAlign='center';g.textBaseline='middle';g.fillText('ЛЕНИН',w/2,h/2+4);});
+var flagC=one(192,128,function(g,w,h){g.fillStyle='#f4f4f4';g.fillRect(0,0,w,43);g.fillStyle='#1c48a8';g.fillRect(0,43,w,43);g.fillStyle='#d52b1e';g.fillRect(0,86,w,42);});
+var glowC=one(128,128,function(g,w,h){var gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(0.25,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);});
+
+/* ===== Материалы ===== */
+var MAT={};
+MAT.brick=mat({map:T(brickC[0]),bumpMap:T(brickC[1],false),bumpScale:0.035,roughness:0.88},4,4,{n:0.2});
+MAT.brickD=mat({map:T(brickC[0]),color:0x9a7a74,roughness:0.9},4,4,{n:0.12});
+MAT.white=mat({map:T(stoneC[0]),bumpMap:T(stoneC[1],false),bumpScale:0.02,roughness:0.8},3,3,{n:0.25});
+MAT.cob=mat({map:T(cobC[0]),bumpMap:T(cobC[1],false),bumpScale:0.05,roughness:0.78,metalness:0.02},2,2);
+MAT.asph=mat({map:T(noiseC('#3c3d40',['rgba(0,0,0,.2)','rgba(255,255,255,.06)'],5000,1)),roughness:0.95},8,8);
+MAT.grass=mat({map:T(noiseC('#4f6d3b',['rgba(20,40,10,.3)','rgba(150,170,90,.15)'],7000,1.5)),roughness:1},6,6);
+MAT.green=mat({map:T(seamC('#3f7a5b','rgba(255,255,255,.18)',24)),roughness:0.55,metalness:0.25},2,2,{n:0.15});
+MAT.silver=mat({map:T(seamC('#aab0b5','rgba(0,0,0,.18)',24)),roughness:0.4,metalness:0.6},2,2,{n:0.12});
+MAT.roof=mat({map:T(seamC('#5a5d61','rgba(0,0,0,.25)',24)),roughness:0.6,metalness:0.4},2,2);
+MAT.gold=mat({color:0xe6b24a,metalness:1,roughness:0.24},1,1,{color:0xffb040,n:0.18});
+MAT.dark=mat({color:0x16171a,roughness:0.7},1,1);
+MAT.graniteR=mat({map:T(noiseC('#6b2a22',['rgba(0,0,0,.25)','rgba(200,120,100,.18)','rgba(30,10,10,.3)'],9000,1)),roughness:0.35,metalness:0.05},2,2,{n:0.12});
+MAT.labr=mat({map:T(noiseC('#1e2026',['rgba(80,110,140,.3)','rgba(0,0,0,.4)'],7000,1)),roughness:0.25,metalness:0.1},2,2,{n:0.05});
+MAT.graniteG=mat({map:T(noiseC('#7a7570',['rgba(0,0,0,.2)','rgba(255,255,255,.12)'],7000,1)),roughness:0.6},2,2,{n:0.1});
+MAT.yellow=mat({map:T(noiseC('#e2c26a',['rgba(0,0,0,.05)'],1500,1)),roughness:0.85},4,4,{n:0.2});
+var gumMap=T(gumC[0]),gumNight=T(gumC[1]);
+MAT.gum=mat({map:gumMap,roughness:0.82},8,18,{map:gumNight,color:0xffffff,n:1.3});
+MAT.gumStone=mat({map:T(stoneC[0]),color:0xe9e1d2,roughness:0.82},3,3,{n:0.25});
+MAT.mus=mat({map:T(musC[0]),roughness:0.85},6,22,{map:T(musC[1]),color:0xffffff,n:1});
+MAT.sen=mat({map:T(senC[0]),roughness:0.85},6,22,{map:T(senC[1]),color:0xffffff,n:0.9});
+MAT.pal=mat({map:T(palC[0]),roughness:0.85},6,22,{map:T(palC[1]),color:0xffffff,n:0.8});
+MAT.kaz=mat({map:T(kazC[0]),roughness:0.85},4,10,{map:T(kazC[1]),color:0xffffff,n:0.9});
+MAT.city=mat({map:T(cityC[0]),vertexColors:true,roughness:0.9},32,28,{map:T(cityC[1]),color:0xffffff,n:1});
+MAT.glass=mat({map:T(glassC),roughness:0.12,metalness:0.5,transparent:true,opacity:0.72},6,6);
+MAT.water=new THREE.MeshStandardMaterial({color:0x2a4555,roughness:0.08,metalness:0.35});
+MAT.bronze=mat({color:0x4f5a43,roughness:0.45,metalness:0.8},1,1,{color:0xffc080,n:0.2});
+MAT.spruce=new THREE.MeshStandardMaterial({color:0x2f4a4c,roughness:0.95,envMapIntensity:0.4});
+MAT.leaf=new THREE.MeshStandardMaterial({color:0x4b6b34,roughness:0.95,flatShading:true});
+MAT.trunk=new THREE.MeshStandardMaterial({color:0x4a3a2c,roughness:1});
+MAT.ruby=new THREE.MeshStandardMaterial({color:0x9a0010,emissive:0xff1a33,emissiveIntensity:0.9,roughness:0.25,metalness:0.2});
+MAT.dial=new THREE.MeshStandardMaterial({map:T(dialC),roughness:0.5,metalness:0.3});
+MAT.plate=new THREE.MeshStandardMaterial({map:T(plateC),roughness:0.3});
+MAT.flag=new THREE.MeshStandardMaterial({map:T(flagC),roughness:0.8,side:THREE.DoubleSide});
+MAT.blue=mat({color:0x1f4e9c,roughness:0.5,metalness:0.3},1,1);
+
+/* ===== Геометрия: помощники ===== */
+function scaleUV(g,a,b){var uv=g.attributes.uv;for(var i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*a,uv.getY(i)*b);return g;}
+function add(o,parent,cast){o.castShadow=cast!==false;o.receiveShadow=true;(parent||scene).add(o);return o;}
+function box(w,h,d,m,x,y,z,parent){
+  var g=new THREE.BoxGeometry(w,h,d),uv=g.attributes.uv,dims=[[d,h],[d,h],[w,d],[w,d],[w,h],[w,h]];
+  for(var f=0;f<6;f++){var mm=Array.isArray(m)?m[f]:m,su=mm.userData.su||4,sv=mm.userData.sv||su;for(var i=0;i<4;i++){var k=f*4+i;uv.setXY(k,uv.getX(k)*dims[f][0]/su,uv.getY(k)*dims[f][1]/sv);}}
+  var o=new THREE.Mesh(g,m);o.position.set(x,y+h/2,z);return add(o,parent);
+}
+function obox(x0,z0,x1,z1,h,th,m,parent,y){
+  var dx=x1-x0,dz=z1-z0,L=Math.sqrt(dx*dx+dz*dz);
+  var o=box(L,h,th,m,(x0+x1)/2,y||0,(z0+z1)/2,parent);o.rotation.y=-Math.atan2(dz,dx);return o;
+}
+function cyl(rt,rb,h,seg,m,x,y,z,parent,open){
+  var g=new THREE.CylinderGeometry(rt,rb,h,seg,1,!!open);
+  scaleUV(g,Math.PI*2*Math.max(rt,rb)/(m.userData.su||4),h/(m.userData.sv||m.userData.su||4));
+  var o=new THREE.Mesh(g,m);o.position.set(x,y+h/2,z);if(seg===8)o.rotation.y=Math.PI/8;return add(o,parent);
+}
+function cone(r,h,seg,m,x,y,z,parent){
+  var g=new THREE.ConeGeometry(r,h,seg,1);
+  scaleUV(g,Math.PI*2*r/(m.userData.su||2),Math.sqrt(h*h+r*r)/(m.userData.sv||m.userData.su||2));
+  var o=new THREE.Mesh(g,m);o.position.set(x,y+h/2,z);if(seg===8)o.rotation.y=Math.PI/8;if(seg===4)o.rotation.y=Math.PI/4;return add(o,parent);
+}
+function sphere(r,m,x,y,z,parent){return add(new THREE.Mesh(new THREE.SphereGeometry(r,24,16),m),parent).position.set(x,y,z);}
+var ONION=[[0.70,0],[0.86,0.08],[0.97,0.2],[1,0.32],[0.95,0.45],[0.8,0.58],[0.58,0.7],[0.36,0.8],[0.18,0.88],[0.07,0.95],[0.015,1]];
+function onion(R,H,m,x,y,z,parent,rep){
+  var g=new THREE.LatheGeometry(ONION.map(function(p){return new THREE.Vector2(p[0]*R,p[1]*H);}),48);
+  scaleUV(g,rep||1,1);var o=new THREE.Mesh(g,m);o.position.set(x,y,z);return add(o,parent);
+}
+function cross(x,y,z,s,parent){
+  box(0.16*s,2.4*s,0.16*s,MAT.gold,x,y,z,parent);
+  box(1.1*s,0.14*s,0.14*s,MAT.gold,x,y+1.65*s,z,parent);
+  box(0.6*s,0.12*s,0.12*s,MAT.gold,x,y+2.05*s,z,parent);
+  var b=box(0.8*s,0.12*s,0.12*s,MAT.gold,x,y+0.7*s,z,parent);b.rotation.z=0.35;
+}
+var SPRITES=[];
+function glow(x,y,z,size,color,parent){
+  var s=new THREE.Sprite(new THREE.SpriteMaterial({map:T(glowC),color:color,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));
+  s.position.set(x,y,z);s.scale.set(size,size,1);s.visible=false;(parent||scene).add(s);SPRITES.push(s);return s;
+}
+var STARS=[];
+var starGeo=(function(){var s=new THREE.Shape();for(var i=0;i<10;i++){var a=i/10*Math.PI*2,r=i%2?0.75:1.875;var px=Math.sin(a)*r,py=Math.cos(a)*r;if(i===0)s.moveTo(px,py);else s.lineTo(px,py);}s.closePath();
+  var g=new THREE.ExtrudeGeometry(s,{depth:0.35,bevelEnabled:true,bevelThickness:0.18,bevelSize:0.12,bevelSegments:2});g.center();return g;})();
+function rubyStar(x,y,z,parent){
+  box(0.25,1.6,0.25,MAT.gold,x,y-1.6,z,parent);sphere(0.45,MAT.gold,x,y-1.8,z,parent);
+  var s=new THREE.Mesh(starGeo,MAT.ruby);s.userData.dyn=true;s.position.set(x,y+1.9,z);add(s,parent);STARS.push(s);
+  glow(x,y+1.9,z,14,0xff3040,parent);return s;
+}
+function vane(x,y,z,parent){box(0.2,3,0.2,MAT.gold,x,y,z,parent);sphere(0.5,MAT.gold,x,y+0.6,z,parent);box(1.6,0.9,0.06,MAT.gold,x+0.8,y+2,z,parent);}
+function eagle(x,y,z,parent,s){s=s||1;box(0.2,1.2*s,0.2,MAT.gold,x,y,z,parent);sphere(0.45*s,MAT.gold,x,y+1.3*s,z,parent);var w=box(1.8*s,0.7*s,0.12,MAT.gold,x,y+1.8*s,z,parent);w.rotation.y=0.6;}
+function group(id){var g=new THREE.Group();g.userData.lm=id;scene.add(g);return g;}
+var GR={};LM.forEach(function(l){GR[l.id]=group(l.id);});
+
+/* ===== Земля, брусчатка, река ===== */
+function plane(w,d,m,x,y,z,cast){
+  var g=new THREE.PlaneGeometry(w,d);scaleUV(g,w/(m.userData.su||4),d/(m.userData.sv||m.userData.su||4));
+  var o=new THREE.Mesh(g,m);o.rotation.x=-Math.PI/2;o.position.set(x,y,z);o.receiveShadow=true;scene.add(o);return o;
+}
+plane(3200,1820,MAT.asph,0,-0.06,310-910);
+plane(3200,1100,MAT.asph,0,-0.06,482+550);
+plane(76,346,MAT.cob,0,0,-5);
+plane(150,137,MAT.cob,37,0,236.5);
+plane(430,505,MAT.grass,-256,0.02,47.5);
+plane(290,60,MAT.grass,-186,0.02,-240);
+plane(230,150,MAT.grass,226,0.03,230);
+var water=new THREE.Mesh(new THREE.PlaneGeometry(3200,170),MAT.water);water.rotation.x=-Math.PI/2;water.position.set(0,-2.4,396);scene.add(water);
+box(3200,2.6,2,MAT.graniteG,0,-2.6,311.5);box(3200,2.6,2,MAT.graniteG,0,-2.6,480.5);
+box(30,1.6,172,MAT.graniteG,82,-0.2,396);
+for(var bz=330;bz<470;bz+=34)box(24,2.6,4,MAT.graniteG,82,-2.6,bz);
+
+/* ===== Кремль: стена с зубцами и башни ===== */
+var K=GR.kremlin;
+var WALL_H=14,WALL_T=4;
+var merlonGeo=(function(){var s=new THREE.Shape();s.moveTo(-0.9,0);s.lineTo(0.9,0);s.lineTo(0.9,2.5);s.lineTo(0,1.85);s.lineTo(-0.9,2.5);s.closePath();
+  var g=new THREE.ExtrudeGeometry(s,{depth:0.8,bevelEnabled:false});g.translate(0,0,-0.4);scaleUV(g,0.25,0.25);return g;})();
+var merlons=[];
+var TOWERS_E=[-205,-130,0,125,150,185,245,300];
+function wallLine(x0,z0,x1,z1,side,skip){
+  obox(x0,z0,x1,z1,WALL_H,WALL_T,MAT.brick,K);
+  var dx=x1-x0,dz=z1-z0,L=Math.sqrt(dx*dx+dz*dz),ux=dx/L,uz=dz/L,nx=-uz*side,nz=ux*side,rot=-Math.atan2(dz,dx);
+  for(var s=2;s<L-2;s+=2.8){
+    var px=x0+ux*s+nx*(WALL_T/2-0.4),pz=z0+uz*s+nz*(WALL_T/2-0.4);
+    if(skip&&skip(px,pz))continue;merlons.push([px,WALL_H,pz,rot]);
+  }
+}
+wallLine(-40,-205,-40,300,-1,function(x,z){return TOWERS_E.some(function(t){return Math.abs(z-t)<9;});});
+wallLine(-40,-205,-330,-205,1,function(x){return x>-49;});
+wallLine(-40,300,-450,300,-1,function(x){return x>-48;});
+(function(){var im=new THREE.InstancedMesh(merlonGeo,MAT.brick,merlons.length),d=new THREE.Object3D();
+  merlons.forEach(function(m,i){d.position.set(m[0],m[1],m[2]);d.rotation.set(0,m[3],0);d.updateMatrix();im.setMatrixAt(i,d.matrix);});
+  add(im,K);})();
+
+function sqTower(o,g){
+  var x=o.x,z=o.z,w=o.w;box(w,o.h,w,MAT.brick,x,0,z,g);
+  box(w+0.5,0.7,w+0.5,MAT.white,x,o.h-0.7,z,g);if(o.mid)box(w+0.4,0.6,w+0.4,MAT.white,x,o.mid,z,g);
+  var y=o.h;
+  (o.tiers||[]).forEach(function(t){
+    if(t.w)box(t.w,t.h,t.w,t.m||MAT.brick,x,y,z,g);else cyl(t.r,t.rb||t.r,t.h,t.seg||8,t.m||MAT.brick,x,y,z,g);
+    if(t.band!==false){if(t.w)box(t.w+0.3,0.5,t.w+0.3,MAT.white,x,y+t.h-0.5,z,g);else cyl(t.r+0.2,t.r+0.2,0.5,t.seg||8,MAT.white,x,y+t.h-0.5,z,g);}
+    y+=t.h;
+  });
+  cone(o.tent[0],o.tent[1],o.tent[2]||8,o.tent[3]||MAT.green,x,y,z,g);y+=o.tent[1];
+  if(o.top==='star')rubyStar(x,y+1.6,z,g);else vane(x,y,z,g);
+  return y;
+}
+function rndTower(o,g){
+  cyl(o.r,o.r*1.04,o.h,24,MAT.brick,o.x,0,o.z,g);cyl(o.r+0.3,o.r+0.3,0.7,24,MAT.white,o.x,o.h-0.7,o.z,g);
+  var y=o.h;cyl(o.r2,o.r2,o.h2,8,MAT.brick,o.x,y,o.z,g);y+=o.h2;cyl(o.r2+0.2,o.r2+0.2,0.5,8,MAT.white,o.x,y-0.5,o.z,g);
+  cone(o.r2+0.4,o.th,8,MAT.green,o.x,y,o.z,g);vane(o.x,y+o.th,o.z,g);
+}
+// Угловая Арсенальная (60,2 м), Никольская (70,4 м), Сенатская (34,3 м), Набатная, Константино-Еленинская, Беклемишевская (46,2 м)
+rndTower({x:-40,z:-205,r:8.3,h:36,r2:5.4,h2:8,th:13},K);
+sqTower({x:-40,z:-130,w:12,h:26,mid:13,tiers:[{w:10,h:10,m:MAT.white},{r:4.6,h:8,m:MAT.white}],tent:[4.2,18],top:'star'},K);
+sqTower({x:-40,z:0,w:10.5,h:22,mid:12,tiers:[],tent:[6.6,10,4],top:'vane'},K);
+sqTower({x:-40,z:185,w:9,h:22,tiers:[{r:4,h:6}],tent:[4,9],top:'vane'},K);
+sqTower({x:-40,z:245,w:10,h:20,mid:10,tiers:[{r:4.4,h:6}],tent:[4.4,9],top:'vane'},K);
+rndTower({x:-40,z:300,r:6.6,h:30,r2:4.2,h2:4,th:10},K);
+// Царская башенка на стене
+[[-1.6,-1.6],[1.6,-1.6],[-1.6,1.6],[1.6,1.6]].forEach(function(o){box(0.6,3.2,0.6,MAT.white,-40+o[0],WALL_H,150+o[1],K);});
+cone(3,4,4,MAT.green,-40,WALL_H+3.2,150,K);sphere(0.4,MAT.gold,-40,WALL_H+7.5,150,K);
+// голубые ели вдоль стены у Мавзолея
+(function(){var parts=[];for(var i=0;i<5;i++){var c=new THREE.ConeGeometry(2.6-i*0.45,4.2,10);c.translate(0,2.6+i*2.3,0);parts.push(c);}
+  var trunk=new THREE.CylinderGeometry(0.25,0.3,2.6,6);trunk.translate(0,1.3,0);
+  var geo=THREE.BufferGeometryUtils.mergeBufferGeometries(parts.map(function(p){return p.toNonIndexed();}));
+  var pos=[];for(var z=-70;z<=70;z+=6.5){if(Math.abs(z)<17)continue;pos.push([-35.6,z]);}
+  var im=new THREE.InstancedMesh(geo,MAT.spruce,pos.length),it=new THREE.InstancedMesh(trunk,MAT.trunk,pos.length),d=new THREE.Object3D();
+  pos.forEach(function(p,i){var s=0.9+RND()*0.25;d.position.set(p[0],0,p[1]);d.scale.set(s,s,s);d.updateMatrix();im.setMatrixAt(i,d.matrix);it.setMatrixAt(i,d.matrix);});
+  add(im,GR.mausoleum);add(it,GR.mausoleum);})();
+
+// Сенат: треугольник с ротондой
+obox(-85,-6,-195,-78,22,18,[MAT.sen,MAT.sen,MAT.green,MAT.sen,MAT.sen,MAT.sen],K);
+obox(-85,6,-195,78,22,18,[MAT.sen,MAT.sen,MAT.green,MAT.sen,MAT.sen,MAT.sen],K);
+box(18,22,170,[MAT.sen,MAT.sen,MAT.green,MAT.sen,MAT.sen,MAT.sen],-195,0,0,K);
+cyl(12.4,12.4,8,32,MAT.yellow,-92,22,0,K);
+for(var ci=0;ci<20;ci++){var ca=ci/20*Math.PI*2;cyl(0.45,0.45,7,8,MAT.white,-92+Math.cos(ca)*12.6,22.3,Math.sin(ca)*12.6,K);}
+(function(){var d=new THREE.Mesh(new THREE.SphereGeometry(12.6,40,16,0,Math.PI*2,0,Math.PI/2),MAT.green);d.scale.y=0.7;d.position.set(-92,30,0);add(d,K);})();
+cyl(1.6,1.6,3,12,MAT.white,-92,38.6,0,K);
+box(0.25,11,0.25,MAT.white,-92,41.6,0,K);
+var flagGeo=new THREE.PlaneGeometry(6,4,16,8);flagGeo.translate(3,0,0);
+var flag=new THREE.Mesh(flagGeo,MAT.flag);flag.userData.dyn=true;flag.position.set(-92,50.4,0);flag.rotation.y=Math.PI/2.4;add(flag,K);
+var flagBase=flagGeo.attributes.position.array.slice();
+
+// Колокольня Ивана Великого (81 м) и соборы Соборной площади
+(function(){var x=-255,z=125;
+  cyl(8.5,9,20,8,MAT.white,x,0,z,K);cyl(7.3,7.6,14,8,MAT.white,x,20,z,K);cyl(6.2,6.4,12,8,MAT.white,x,34,z,K);
+  cyl(4.6,4.6,10,16,MAT.white,x,46,z,K);onion(5.4,14,MAT.gold,x,56,z,K);cross(x,70,z,4.4,K);
+  box(16,30,12,MAT.white,x,0,z+15,K);onion(3.4,6,MAT.gold,x,30,z+15,K);cross(x,36,z+15,2,K);
+  function cathedral(cx,cz,w,d,h,dm){box(w,h,d,MAT.white,cx,0,cz,K);box(w+0.6,1,d+0.6,MAT.roof,cx,h,cz,K);
+    [[0,0,1.2],[-w/4,-d/4,1],[w/4,-d/4,1],[-w/4,d/4,1],[w/4,d/4,1]].forEach(function(o){
+      var r=2.6*o[2];cyl(r,r,6*o[2],16,MAT.white,cx+o[0],h+1,cz+o[1],K);onion(r*1.25,5.5*o[2],dm,cx+o[0],h+1+6*o[2],cz+o[1],K);cross(cx+o[0],h+1+6*o[2]+5.5*o[2],cz+o[1],1.3*o[2],K);});}
+  cathedral(-300,80,24,35,22,MAT.gold);
+  cathedral(-218,85,20,28,20,MAT.silver);
+  cathedral(-230,40,16,20,17,MAT.gold);
+  box(125,25,46,[MAT.pal,MAT.pal,MAT.green,MAT.pal,MAT.pal,MAT.pal],-330,0,255,K);
+  cyl(5,5,4,16,MAT.pal,-330,25,255,K);onion(6,8,MAT.green,-330,29,255,K);
+})();
+
+/* ===== Спасская башня (71 м) ===== */
+var CLOCK=[];
+(function(){var g=GR.spasskaya,x=-40,z=125;
+  box(14,28,14,MAT.brick,x,0,z,g);box(14.5,0.7,14.5,MAT.white,x,14,z,g);box(14.6,0.9,14.6,MAT.white,x,27.1,z,g);
+  box(0.4,7,4.6,MAT.dark,x+7.05,0,z,g);
+  (function(){var a=new THREE.Mesh(new THREE.CylinderGeometry(2.3,2.3,0.4,24),MAT.dark);a.rotation.z=Math.PI/2;a.position.set(x+7.05,7,z);add(a,g);})();
+  box(5,9,9,MAT.brick,x+9.5,0,z,g);box(0.4,6,4.4,MAT.dark,x+12.05,0,z,g);
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(o){var px=x+o[0]*6.6,pz=z+o[1]*6.6;cyl(0.75,0.85,5,8,MAT.white,px,28,pz,g);cone(0.85,3,8,MAT.white,px,33,pz,g);sphere(0.3,MAT.gold,px,36.3,pz,g);});
+  box(11,4,11,MAT.white,x,28,z,g);
+  box(10,9.5,10,MAT.brick,x,32,z,g);box(10.4,0.6,10.4,MAT.white,x,41,z,g);
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(n){
+    var c=new THREE.Group();c.userData.dyn=true;c.position.set(x+n[0]*5.06,36.8,z+n[1]*5.06);c.lookAt(x+n[0]*10,36.8,z+n[1]*10);g.add(c);
+    var d=new THREE.Mesh(new THREE.CircleGeometry(3.06,48),MAT.dial);add(d,c,false);
+    var hh=new THREE.Mesh(new THREE.BoxGeometry(0.28,1.9,0.06).translate(0,0.75,0.06),MAT.gold),mm=new THREE.Mesh(new THREE.BoxGeometry(0.18,2.6,0.06).translate(0,1.05,0.1),MAT.gold);
+    c.add(hh);c.add(mm);CLOCK.push([hh,mm]);
+  });
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(o){var px=x+o[0]*4.6,pz=z+o[1]*4.6;cyl(0.5,0.6,3,8,MAT.white,px,41.6,pz,g);cone(0.6,2.4,8,MAT.gold,px,44.6,pz,g);});
+  cyl(4.6,4.6,8,8,MAT.brick,x,41.6,z,g);cyl(4.8,4.8,0.6,8,MAT.white,x,49,z,g);
+  for(var i=0;i<8;i++){var a=i/8*Math.PI*2+Math.PI/8;box(0.12,4.2,1.8,MAT.dark,x+Math.cos(a)*4.3,43.2,z+Math.sin(a)*4.3,g).rotation.y=-a;}
+  cyl(3.8,3.8,3.6,8,MAT.white,x,49.6,z,g);
+  cone(3.9,13,8,MAT.green,x,53.2,z,g);
+  rubyStar(x,67.6,z,g);
+})();
+
+/* ===== Мавзолей (24 × 12 м) и трибуны ===== */
+(function(){var g=GR.mausoleum,x=-30.5;
+  box(14,1.4,26,MAT.graniteR,x,0,0,g);
+  box(12,3.6,23,MAT.graniteR,x,1.4,0,g);box(12.2,0.7,23.2,MAT.labr,x,5,0,g);
+  box(2.2,4.3,9,MAT.graniteR,x+6.9,1.4,0,g);
+  box(0.1,2.6,2.2,MAT.dark,x+8.05,1.4,0,g);
+  var p=new THREE.Mesh(new THREE.PlaneGeometry(6,1.5),MAT.plate);p.rotation.y=Math.PI/2;p.position.set(x+8.02,4.8,0);add(p,g,false);
+  box(10,2,18,MAT.graniteR,x-0.5,5.7,0,g);box(10.2,0.5,18.2,MAT.labr,x-0.5,7.7,0,g);
+  box(8,1.6,12,MAT.graniteR,x-1,8.2,0,g);
+  box(4.5,1.6,7,MAT.labr,x-1,9.8,0,g);
+  for(var i=-3;i<=3;i++){box(0.35,1.8,0.35,MAT.graniteR,x+2,9.8,i*1.3,g);box(0.35,1.8,0.35,MAT.graniteR,x-4,9.8,i*1.3,g);}
+  for(var j=-1;j<=1;j++){box(0.35,1.8,0.35,MAT.graniteR,x-1+j*2,9.8,4.4,g);box(0.35,1.8,0.35,MAT.graniteR,x-1+j*2,9.8,-4.4,g);}
+  box(7,0.5,10.4,MAT.graniteR,x-1,11.6,0,g);
+  [-1,1].forEach(function(s){for(var k=0;k<3;k++)box(6-k*1.8,1,52,MAT.graniteG,-31.5-k*0.9,k,s*43,g);});
+})();
+
+/* ===== ГУМ (242 × 88 м) ===== */
+(function(){var g=GR.gum,x0=38,L=242,D=88,H=18,cx=x0+D/2;
+  box(D,H,L,[MAT.gum,MAT.gum,MAT.roof,MAT.roof,MAT.gum,MAT.gum],cx,0,0,g);
+  box(D+0.8,0.9,L+0.8,MAT.gumStone,cx,H,0,g);
+  [cx-28,cx,cx+28].forEach(function(vx){
+    var c=new THREE.CylinderGeometry(7.5,7.5,L-4,28,1,true,Math.PI/2,Math.PI);
+    scaleUV(c,Math.PI*7.5/6,(L-4)/6);var m=new THREE.Mesh(c,MAT.glass);m.rotation.x=Math.PI/2;m.position.set(vx,H+0.9,0);add(m,g,false);
+    box(15.4,1.2,L-4,MAT.roof,vx,H+0.2,0,g);
+  });
+  (function(){var c=new THREE.CylinderGeometry(7.5,7.5,D-6,28,1,true,0,Math.PI);scaleUV(c,Math.PI*7.5/6,(D-6)/6);var m=new THREE.Mesh(c,MAT.glass);m.rotation.z=Math.PI/2;m.position.set(cx,H+0.9,0);add(m,g,false);})();
+  box(8,10,22,MAT.gumStone,x0+2,H-4,0,g);box(8.4,0.8,22.4,MAT.white,x0+2,H+6,0,g);
+  [-8,8].forEach(function(dz){cyl(2,2,6,8,MAT.gumStone,x0+2,H+6.8,dz,g);cone(2.4,7,8,MAT.green,x0+2,H+12.8,dz,g);sphere(0.4,MAT.gold,x0+2,H+20.2,dz,g);});
+  box(0.3,7,5,MAT.dark,x0-2.05,0,0,g);
+  [-L/2+3,L/2-3].forEach(function(z){cyl(3.2,3.2,9,8,MAT.gumStone,x0+2,H,z,g);cone(3.6,8,8,MAT.green,x0+2,H+9,z,g);sphere(0.45,MAT.gold,x0+2,H+17.4,z,g);});
+  [-60,60].forEach(function(z){box(6,6,10,MAT.gumStone,x0+2,H,z,g);cone(4.5,6,4,MAT.green,x0+2,H+6,z,g);});
+  var lampM=new THREE.MeshStandardMaterial({color:0xfff2d0,emissive:0xffe0a0,emissiveIntensity:0.6});
+  for(var z=-110;z<=110;z+=22){box(0.24,7.5,0.24,MAT.dark,34,0,z,g);sphere(0.4,lampM,34,7.8,z,g);glow(34,7.8,z,7,0xffd890,g);}
+})();
+
+/* ===== Исторический музей ===== */
+(function(){var g=GR.museum,cx=-6,cz=-205,W=56,D=54,H=22,zf=cz+D/2;
+  box(W,H,D,[MAT.mus,MAT.mus,MAT.silver,MAT.roof,MAT.mus,MAT.mus],cx,0,cz,g);
+  (function(){var r=new THREE.Mesh(new THREE.ConeGeometry(30,8,4,1),MAT.silver);r.rotation.y=Math.PI/4;r.scale.set(W/42.4,1,D/42.4);r.position.set(cx,H+4,cz);add(r,g);})();
+  box(12,30,8,MAT.mus,cx,0,zf+4,g);box(12.6,0.8,8.6,MAT.white,cx,30,zf+4,g);
+  box(0.3,6,4,MAT.dark,cx,0,zf+8.05,g).rotation.y=Math.PI/2;
+  cyl(4.5,4.5,6,8,MAT.brick,cx,30.8,zf+4,g);cone(5,9,8,MAT.silver,cx,36.8,zf+4,g);eagle(cx,45.8,zf+4,g,1.2);
+  [[-W/2+3,zf-3],[W/2-3,zf-3],[-W/2+3,cz-D/2+3],[W/2-3,cz-D/2+3]].forEach(function(p,i){
+    box(6.5,H+10,6.5,MAT.mus,cx+p[0],0,p[1],g);box(7,0.7,7,MAT.white,cx+p[0],H+10,p[1],g);
+    cone(4,i<2?9:7,8,MAT.silver,cx+p[0],H+10.7,p[1],g);eagle(cx+p[0],H+10.7+(i<2?9:7),p[1],g);});
+  [-14,14].forEach(function(dx){box(4.5,H+5,4.5,MAT.mus,cx+dx,0,zf-1.5,g);cone(3,6,8,MAT.silver,cx+dx,H+5,zf-1.5,g);});
+})();
+
+/* ===== Воскресенские ворота и Иверская часовня ===== */
+(function(){var g=GR.gate,z=-190;
+  [28,40].forEach(function(x){box(6.5,18,6.5,MAT.brick,x,0,z,g);box(7,0.6,7,MAT.white,x,9,z,g);box(7,0.7,7,MAT.white,x,17.3,z,g);
+    cyl(2.9,2.9,4,8,MAT.white,x,18,z,g);cone(3.1,8,8,MAT.green,x,22,z,g);eagle(x,30,z,g);});
+  box(6,13,12,MAT.brick,34,0,z,g);box(6.4,0.6,12.4,MAT.white,34,12.4,z,g);
+  [-2.6,2.6].forEach(function(dx){box(2.2,6,0.3,MAT.dark,34+dx,0,z+6.05,g);});
+  box(4,4.4,5,MAT.white,34,0,-180,g);cyl(1.7,1.7,1,16,MAT.blue,34,4.4,-180,g);
+  (function(){var d=new THREE.Mesh(new THREE.SphereGeometry(1.7,24,12,0,Math.PI*2,0,Math.PI/2),MAT.blue);d.position.set(34,5.4,-180);add(d,g);})();
+  cyl(0.5,0.5,1,12,MAT.blue,34,7,-180,g);sphere(0.3,MAT.gold,34,8.2,-180,g);
+})();
+
+/* ===== Казанский собор ===== */
+(function(){var g=GR.kazan,x=57,z=-157;
+  box(16,10,16,[MAT.kaz,MAT.kaz,MAT.roof,MAT.roof,MAT.kaz,MAT.kaz],x,0,z,g);
+  box(13,1.6,13,MAT.white,x,10,z,g);box(10,1.6,10,MAT.white,x,11.6,z,g);
+  for(var i=-1;i<=1;i++){[[0,8.1],[0,-8.1]].forEach(function(o){var k=new THREE.Mesh(new THREE.CylinderGeometry(2,2,0.6,16,1,false,0,Math.PI),MAT.white);k.rotation.x=Math.PI/2;k.rotation.z=Math.PI/2;k.position.set(x+i*5,10,z+o[1]);add(k,g);});}
+  cyl(2.8,2.8,5,16,MAT.brick,x,13.2,z,g);cyl(3,3,0.5,16,MAT.white,x,17.7,z,g);
+  onion(3.7,7,mat({map:T(domeC('scale','#3f7d5c','#2f6a4c')),roughness:0.5,metalness:0.3},1,1),x,18.2,z,g,6);
+  cross(x,25.2,z,1.6,g);
+  box(6,12,6,MAT.kaz,x+9,0,z+9,g);cyl(2.4,2.4,4,8,MAT.white,x+9,12,z+9,g);cone(2.7,6,8,MAT.green,x+9,16,z+9,g);cross(x+9,22,z+9,0.9,g);
+})();
+
+/* ===== Лобное место ===== */
+(function(){var g=GR.lobnoe,x=-5,z=155;
+  cyl(6.5,6.6,1.2,48,MAT.white,x,0,z,g);
+  var p=new THREE.Mesh(new THREE.CylinderGeometry(6.5,6.5,1.1,48,1,true),MAT.white);p.material=MAT.white;p.position.set(x,1.75,z);add(p,g);
+  var pin=new THREE.Mesh(new THREE.CylinderGeometry(6.1,6.1,1.1,48,1,true),MAT.white);pin.position.set(x,1.75,z);pin.scale.set(1,1,1);add(pin,g);
+  box(0.3,1.2,6.1,MAT.white,x+6.3,1.2,z,g).visible=false;
+  box(2.4,1.2,3,MAT.white,x+7.5,0,z,g);box(1.2,0.6,3,MAT.white,x+9.2,0,z,g);
+})();
+
+/* ===== Памятник Минину и Пожарскому ===== */
+(function(){var g=GR.minin,x=22,z=176;
+  box(5,0.6,8,MAT.graniteG,x,0,z,g);box(3.8,3.9,6.6,MAT.graniteR,x,0.6,z,g);
+  box(0.05,2,4,MAT.bronze,x+1.93,1.5,z,g);box(0.05,2,4,MAT.bronze,x-1.93,1.5,z,g);
+  box(4.2,0.4,7,MAT.graniteR,x,4.5,z,g);
+  cyl(0.55,0.75,3.4,12,MAT.bronze,x,4.9,z-1.3,g);sphere(0.38,MAT.bronze,x,8.6,z-1.3,g);
+  var arm=cyl(0.14,0.14,1.8,8,MAT.bronze,x-0.9,7.2,z-1.3,g);arm.rotation.z=1.1;
+  box(1.2,1.6,1.6,MAT.bronze,x,4.9,z+1.4,g);cyl(0.5,0.6,1.6,12,MAT.bronze,x,6.5,z+1.4,g);sphere(0.36,MAT.bronze,x,8.4,z+1.4,g);
+  var sh=cyl(0.9,0.9,0.12,24,MAT.bronze,x+0.9,5.6,z+2,g);sh.rotation.x=Math.PI/2;
+})();
+
+/* ===== Собор Василия Блаженного (65 м) ===== */
+(function(){var g=GR.basil,cx=25,cz=210;
+  box(44,6,30,MAT.brick,cx,0,cz,g);box(30,6,44,MAT.brick,cx,0,cz,g);
+  box(44.4,0.6,30.4,MAT.white,cx,5.4,cz,g);box(30.4,0.6,44.4,MAT.white,cx,5.4,cz,g);
+  box(6,6,8,MAT.brick,cx-4,0,cz-24,g);cone(4.2,4,4,MAT.green,cx-4,6,cz-24,g);
+  cyl(7.5,7.5,22,8,MAT.brick,cx,6,cz,g);
+  for(var k=0;k<3;k++)cyl(7.8-k*0.6,7.8-k*0.6,0.8,8,MAT.white,cx,24+k*1.4,cz,g);
+  var tm=mat({map:T(tentC),roughness:0.6},3,3,{n:0.25});
+  cone(6.6,24,8,tm,cx,28,cz,g);
+  cyl(1.4,1.4,2.4,12,MAT.gold,cx,51,cz,g);onion(1.9,4,MAT.gold,cx,53.4,cz,g);cross(cx,57.4,cz,2.4,g);
+  function church(dx,dz,rOct,hOct,rDrum,hDrum,R,H,pat,rep){
+    var x=cx+dx,z=cz+dz;cyl(rOct,rOct,hOct,8,MAT.brick,x,6,z,g);cyl(rOct+0.25,rOct+0.25,0.6,8,MAT.white,x,6+hOct-0.6,z,g);
+    for(var i=0;i<3;i++)cyl(rOct-0.2-i*0.4,rOct-0.2-i*0.4,0.6,8,MAT.white,x,6+hOct+i*0.6,z,g);
+    var y=6+hOct+1.8;cyl(rDrum,rDrum,hDrum,16,MAT.brick,x,y,z,g);cyl(rDrum+0.2,rDrum+0.2,0.5,16,MAT.white,x,y+hDrum-0.5,z,g);
+    onion(R,H,mat({map:T(pat),roughness:0.45,metalness:0.15},1,1,{n:0.3}),x,y+hDrum,z,g,rep);
+    cross(x,y+hDrum+H-0.2,z,R/2.6,g);
+  }
+  church(0,-16,5,14,3.2,6,4.5,10,domeC('swirl','#c4392b','#2e7d50'),5);
+  church(16,0,5,14,3.2,6,4.5,10,domeC('zig','#2f6db3','#f1ede4'),6);
+  church(0,16,5,14,3.2,6,4.5,10,domeC('swirl','#e1b13b','#2e7d50'),5);
+  church(-16,0,5,14,3.2,6,4.5,10,domeC('check','#1f8f86','#e1b13b'),5);
+  church(-11.3,-11.3,3.5,9,2.3,4,3.2,7.5,domeC('rib','#c4392b','#f1ede4'),6);
+  church(11.3,-11.3,3.5,9,2.3,4,3.2,7.5,domeC('scale','#2e7d50','#e1b13b'),6);
+  church(11.3,11.3,3.5,9,2.3,4,3.2,7.5,domeC('swirl','#1f8f86','#f1ede4'),5);
+  church(-11.3,11.3,3.5,9,2.3,4,3.2,7.5,domeC('zig','#c4392b','#e1b13b'),6);
+  var bx=cx+28,bz=cz+12;box(9,12,9,MAT.brick,bx,0,bz,g);box(9.4,0.6,9.4,MAT.white,bx,11.4,bz,g);
+  cyl(4.2,4.2,8,8,MAT.brick,bx,12,bz,g);
+  for(var i=0;i<8;i++){var a=i/8*Math.PI*2+Math.PI/8;box(0.12,4.5,1.9,MAT.dark,bx+Math.cos(a)*3.95,13.5,bz+Math.sin(a)*3.95,g).rotation.y=-a;}
+  cyl(4.4,4.4,0.6,8,MAT.white,bx,20,bz,g);cone(4.3,11,8,MAT.green,bx,20.6,bz,g);onion(1.2,2.6,MAT.gold,bx,31.6,bz,g);cross(bx,34,bz,1.2,g);
+})();
+
+/* ===== Город вокруг (одна общая геометрия) ===== */
+(function(){
+  var RC=rng(2024),geos=[],tints=[[0.85,0.78,0.66],[0.72,0.72,0.74],[0.88,0.78,0.55],[0.84,0.66,0.6],[0.68,0.72,0.68],[0.9,0.85,0.78],[0.78,0.6,0.5]];
+  function ex(x0,z0,x1,z1){
+    function hit(a){return x1>a[0]&&x0<a[2]&&z1>a[1]&&z0<a[3];}
+    return [[-470,-280,-30,320],[-70,-265,145,315],[90,140,350,315],[-1600,300,1600,490],[-260,-380,40,-260],[-340,-275,-30,-205]].some(hit);
+  }
+  for(var gx=-1100;gx<=1100;gx+=88)for(var gz=-1100;gz<=1100;gz+=88){
+    var x0=gx+RC()*8,z0=gz+RC()*8,w=58+RC()*20,d=58+RC()*20;
+    if(Math.hypot(gx,gz)>1150||ex(x0,z0,x0+w,z0+d))continue;
+    var n=1+Math.floor(RC()*3),seg=w/n;
+    for(var i=0;i<n;i++){
+      var bw=seg-1.5,h=14+RC()*(Math.hypot(gx,gz)>600?30:18),gg=new THREE.BoxGeometry(bw,h,d),uv=gg.attributes.uv,dims=[[d,h],[d,h],[bw,d],[bw,d],[bw,h],[bw,h]];
+      for(var f=0;f<6;f++)for(var k=0;k<4;k++){var q=f*4+k;if(f===2||f===3)uv.setXY(q,0.5,0.01);else uv.setXY(q,uv.getX(q)*dims[f][0]/32+RC()*0,uv.getY(q)*dims[f][1]/28);}
+      gg.translate(x0+seg*i+bw/2,h/2,z0+d/2);
+      var t=tints[Math.floor(RC()*tints.length)],col=new Float32Array(gg.attributes.position.count*3);
+      for(var c=0;c<col.length;c+=3){col[c]=t[0];col[c+1]=t[1];col[c+2]=t[2];}
+      gg.setAttribute('color',new THREE.BufferAttribute(col,3));geos.push(gg);
+    }
+  }
+  var city=new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(geos),MAT.city);add(city);
+})();
+
+/* ===== Деревья ===== */
+(function(){
+  var RT=rng(5),pts=[];
+  function tryAdd(x,z){pts.push([x,z,3+RT()*2.5]);}
+  for(var i=0;i<260;i++){var x=-460+RT()*410,z=-195+RT()*485;
+    if(x>-210&&Math.abs(z)<88&&x<-75)continue;if(x>-345&&x<-200&&z>20&&z<150)continue;if(x<-265&&z>225)continue;if(x>-60)continue;tryAdd(x,z);}
+  for(var j=0;j<120;j++)tryAdd(-330+RT()*285,-268+RT()*56);
+  for(var k=0;k<110;k++)tryAdd(115+RT()*220,160+RT()*140);
+  var fol=new THREE.IcosahedronGeometry(1,1),tr=new THREE.CylinderGeometry(0.25,0.35,1,6);tr.translate(0,0.5,0);
+  var im=new THREE.InstancedMesh(fol,MAT.leaf,pts.length),it=new THREE.InstancedMesh(tr,MAT.trunk,pts.length),d=new THREE.Object3D(),c=new THREE.Color();
+  pts.forEach(function(p,i){var r=p[2];d.position.set(p[0],r*1.25+2,p[1]);d.scale.set(r,r*1.1,r);d.rotation.y=RT()*6;d.updateMatrix();im.setMatrixAt(i,d.matrix);
+    c.setHSL(0.24+RT()*0.06,0.35+RT()*0.15,0.22+RT()*0.08);im.setColorAt(i,c);
+    d.position.set(p[0],0,p[1]);d.scale.set(1,r*0.9,1);d.rotation.set(0,0,0);d.updateMatrix();it.setMatrixAt(i,d.matrix);});
+  add(im);add(it);
+})();
+
+/* ===== Люди для масштаба ===== */
+var PEOPLE=(function(){
+  var N=small?160:300,RP=rng(9),body=new THREE.CylinderGeometry(0.2,0.17,1.45,6);body.translate(0,0.725,0);
+  var head=new THREE.SphereGeometry(0.12,8,6);head.translate(0,1.6,0);
+  var mb=new THREE.InstancedMesh(body,new THREE.MeshStandardMaterial({roughness:0.9}),N),mh=new THREE.InstancedMesh(head,new THREE.MeshStandardMaterial({color:0xd9b49a,roughness:0.8}),N);
+  var cols=['#2b2e36','#4a3b33','#6d1f22','#1f3550','#c9c2b5','#3d4a3a','#875b3a','#202022','#b8473a','#5a6470'],c=new THREE.Color(),list=[];
+  for(var i=0;i<N;i++){c.set(cols[Math.floor(RP()*cols.length)]);mb.setColorAt(i,c);
+    list.push({x:-32+RP()*64,z:-165+RP()*325,a:RP()*6.28,v:(0.9+RP()*0.6)*(RP()<0.15?0:1)});}
+  scene.add(mb);scene.add(mh);
+  var m4=new THREE.Matrix4();
+  function step(dt){for(var i=0;i<N;i++){var p=list[i];p.a+=(RP()-0.5)*0.4*dt;p.x+=Math.cos(p.a)*p.v*dt;p.z+=Math.sin(p.a)*p.v*dt;
+    if(p.x<-33||p.x>34)p.a=Math.PI-p.a;if(p.z<-166||p.z>165)p.a=-p.a;p.x=Math.max(-33,Math.min(34,p.x));p.z=Math.max(-166,Math.min(165,p.z));
+    if(p.x<-22&&Math.abs(p.z)<14)p.x=-22;
+    m4.makeTranslation(p.x,0,p.z);mb.setMatrixAt(i,m4);mh.setMatrixAt(i,m4);}
+    mb.instanceMatrix.needsUpdate=true;mh.instanceMatrix.needsUpdate=true;}
+  step(0);return {step:step};
+})();
+
+/* ===== Склейка статичной геометрии: один меш на материал в каждой группе ===== */
+function mergeStatic(root){
+  root.updateMatrixWorld(true);
+  var buckets={},drop=[];
+  root.traverse(function(o){
+    if(!o.isMesh||o.isInstancedMesh||o.userData.dyn||Array.isArray(o.material)||!o.visible)return;
+    for(var p=o.parent;p&&p!==root;p=p.parent)if(p.userData.dyn)return;
+    var g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();
+    Object.keys(g.attributes).forEach(function(k){if(k!=='position'&&k!=='normal'&&k!=='uv')g.deleteAttribute(k);});
+    g.applyMatrix4(o.matrixWorld);
+    (buckets[o.material.uuid]=buckets[o.material.uuid]||{m:o.material,g:[]}).g.push(g);drop.push(o);
+  });
+  drop.forEach(function(o){o.parent.remove(o);o.geometry.dispose();});
+  Object.keys(buckets).forEach(function(k){var b=buckets[k];add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(b.g),b.m),root);});
+}
+LM.forEach(function(l){mergeStatic(GR[l.id]);});
+
+/* ===== Небо, свет, окружение ===== */
+var sunDir=new V3(-0.55,0.62,0.56).normalize();
+var hemi=new THREE.HemisphereLight(0xbcd4ff,0x6b5a4a,0.45);scene.add(hemi);
+var sun=new THREE.DirectionalLight(0xfff0d8,2.6);
+sun.position.copy(sunDir).multiplyScalar(600).add(new V3(10,0,30));sun.target.position.set(10,0,30);
+sun.castShadow=true;sun.shadow.mapSize.set(small?2048:4096,small?2048:4096);
+// сцена статична, поэтому карту теней считаем один раз, а не каждый кадр
+renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
+var sc=sun.shadow.camera;sc.left=-380;sc.right=380;sc.top=380;sc.bottom=-380;sc.near=100;sc.far=1300;
+sun.shadow.bias=-0.0004;sun.shadow.normalBias=0.06;
+scene.add(sun);scene.add(sun.target);
+
+var pmrem=new THREE.PMREMGenerator(renderer);
+var sky=null,envDay=null,envNight;
+if(THREE.Sky){
+  sky=new THREE.Sky();sky.scale.setScalar(9000);
+  var u=sky.material.uniforms;u.turbidity.value=5;u.rayleigh.value=1.4;u.mieCoefficient.value=0.004;u.mieDirectionalG.value=0.8;u.sunPosition.value.copy(sunDir);
+  var envScene=new THREE.Scene();envScene.add(sky);envDay=pmrem.fromScene(envScene).texture;envScene.remove(sky);scene.add(sky);
+}else{scene.background=new THREE.Color(0x9fbad3);var es=new THREE.Scene();es.background=new THREE.Color(0x9fbad3);envDay=pmrem.fromScene(es).texture;}
+(function(){var es=new THREE.Scene();es.background=new THREE.Color(0x0c1424);var l=new THREE.Mesh(new THREE.SphereGeometry(10,16,8),new THREE.MeshBasicMaterial({color:0x6a4a30}));l.position.set(0,-30,0);es.add(l);envNight=pmrem.fromScene(es).texture;})();
+var starsPts=(function(){var n=1800,p=new Float32Array(n*3),R=rng(11);for(var i=0;i<n;i++){var a=R()*Math.PI*2,e=Math.asin(0.05+R()*0.95),r=5000;p[i*3]=Math.cos(a)*Math.cos(e)*r;p[i*3+1]=Math.sin(e)*r;p[i*3+2]=Math.sin(a)*Math.cos(e)*r;}
+  var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  var s=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:1.6,sizeAttenuation:false,fog:false,transparent:true,opacity:0.8}));s.visible=false;scene.add(s);return s;})();
+scene.environment=envDay;
+scene.fog=new THREE.Fog(0xc7d3de,900,3200);
+
+var night=false;
+function setNight(on){
+  night=on;
+  if(sky)sky.visible=!on;
+  scene.background=on?new THREE.Color(0x070b16):(sky?null:new THREE.Color(0x9fbad3));
+  scene.environment=on?envNight:envDay;
+  scene.fog.color.set(on?0x070b16:0xc7d3de);
+  sun.intensity=on?0.22:2.3;sun.color.set(on?0x8ea4ff:0xffecd0);
+  hemi.intensity=on?0.12:0.22;hemi.color.set(on?0x5a6a9a:0xbcd4ff);
+  renderer.toneMappingExposure=on?0.9:0.5;
+  FLOOD.forEach(function(f){f.m.emissiveIntensity=on?f.n:0;});
+  SPRITES.forEach(function(s){s.visible=on;});
+  starsPts.visible=on;water.material.color.set(on?0x0d1a24:0x2a4555);
+  document.getElementById('tNight').setAttribute('aria-pressed',String(on));
+}
+
+/* ===== Камера и управление ===== */
+var camera=new THREE.PerspectiveCamera(40,1,0.5,12000);
+var controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true;controls.dampingFactor=0.08;
+controls.minDistance=3;controls.maxDistance=1600;controls.maxPolarAngle=Math.PI*0.6;
+controls.autoRotate=!reduce;controls.autoRotateSpeed=0.35;
+controls.target.fromArray(DEF.t);camera.position.fromArray(DEF.c);
+
+var panel=document.getElementById('panel');
+function frame(){
+  var w=viewer.clientWidth,h=viewer.clientHeight;if(!w||!h)return;
+  camera.aspect=w/h;
+  if(!panel.hidden&&w>620)camera.setViewOffset(w,h,180,0,w,h);else camera.clearViewOffset();
+  camera.updateProjectionMatrix();renderer.setSize(w,h,false);
+}
+frame();
+if(window.ResizeObserver)new ResizeObserver(frame).observe(viewer);else addEventListener('resize',frame);
+
+var anim=null;
+function flyTo(t,c){
+  anim={s:performance.now(),d:reduce?1:1800,fT:controls.target.clone(),tT:new V3().fromArray(t),fC:camera.position.clone(),tC:new V3().fromArray(c)};
+}
+function stepAnim(now){
+  if(!anim)return;
+  var k=Math.min(1,(now-anim.s)/anim.d),e=k<0.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+  controls.target.lerpVectors(anim.fT,anim.tT,e);
+  // дугой: поднимаем камеру в середине пути, чтобы не пролетать сквозь здания
+  camera.position.lerpVectors(anim.fC,anim.tC,e);camera.position.y+=Math.sin(e*Math.PI)*Math.min(160,anim.fC.distanceTo(anim.tC)*0.35);
+  if(k>=1)anim=null;
+}
+
+function setAuto(on){controls.autoRotate=on;document.getElementById('tRotate').setAttribute('aria-pressed',String(on));}
+function select(id){
+  var l=id!=null&&IDX[id]!=null?LM[IDX[id]]:null;
+  chips.querySelectorAll('.chip').forEach(function(b){b.setAttribute('aria-pressed',String(!!l&&b.dataset.lm===id));});
+  if(!l){panel.hidden=true;frame();flyTo(DEF.t,DEF.c);return;}
+  document.getElementById('pYear').textContent=l.year;
+  document.getElementById('pName').textContent=l.name;
+  document.getElementById('pMeta').textContent=l.meta;
+  document.getElementById('pText').textContent=l.text;
+  document.getElementById('pSize').textContent=l.size;
+  panel.hidden=false;frame();setAuto(false);flyTo(l.t,l.c);
+  var chip=chips.querySelector('[data-lm="'+id+'"]');if(chip&&chip.scrollIntoView)chip.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+chips.addEventListener('click',function(e){var b=e.target.closest('[data-lm]');if(b)select(b.dataset.lm);});
+document.addEventListener('rs:select',function(e){select(e.detail);});
+document.getElementById('panelClose').addEventListener('click',function(){select(null);});
+document.getElementById('pReset').addEventListener('click',function(){select(null);});
+document.getElementById('tReset').addEventListener('click',function(){select(null);});
+document.getElementById('tRotate').addEventListener('click',function(){setAuto(!controls.autoRotate);});
+document.getElementById('tNight').addEventListener('click',function(){setNight(!night);});
+document.getElementById('tEye').addEventListener('click',function(){select(null);setAuto(false);flyTo(EYE.t,EYE.c);});
+controls.addEventListener('start',function(){anim=null;if(controls.autoRotate)setAuto(false);});
+
+/* наведение и клик */
+var ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),tip=document.getElementById('tip'),pickables=LM.map(function(l){return GR[l.id];});
+function pick(cx,cy){
+  var r=canvas.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-(cy-r.top)/r.height*2+1);
+  ray.setFromCamera(ndc,camera);var hits=ray.intersectObjects(pickables,true);
+  for(var i=0;i<hits.length;i++){var o=hits[i].object;if(!o.visible||o.isSprite)continue;while(o&&!o.userData.lm)o=o.parent;if(o)return o.userData.lm;}
+  return null;
+}
+var down=null,lastHover=0;
+canvas.addEventListener('pointerdown',function(e){down={x:e.clientX,y:e.clientY};tip.hidden=true;});
+canvas.addEventListener('pointerup',function(e){
+  if(!down)return;var moved=Math.abs(e.clientX-down.x)+Math.abs(e.clientY-down.y);down=null;
+  if(moved>6)return;var id=pick(e.clientX,e.clientY);if(id)select(id);
+});
+canvas.addEventListener('pointermove',function(e){
+  if(e.pointerType!=='mouse'||e.buttons)return;
+  var now=performance.now();if(now-lastHover<110)return;lastHover=now;
+  var id=pick(e.clientX,e.clientY),r=viewer.getBoundingClientRect();
+  canvas.classList.toggle('hot',!!id);
+  if(!id){tip.hidden=true;return;}
+  tip.textContent=LM[IDX[id]].short;tip.hidden=false;tip.style.left=(e.clientX-r.left)+'px';tip.style.top=(e.clientY-r.top)+'px';
+});
+canvas.addEventListener('pointerleave',function(){tip.hidden=true;canvas.classList.remove('hot');});
+
+/* куранты: московское время */
+var clockEl=document.getElementById('clock');
+function updateClock(){
+  var d=new Date(Date.now()+3*3600000),h=d.getUTCHours(),m=d.getUTCMinutes(),s=d.getUTCSeconds();
+  var ha=-((h%12)+m/60)/12*Math.PI*2,ma=-(m+s/60)/60*Math.PI*2;
+  CLOCK.forEach(function(c){c[0].rotation.z=ha;c[1].rotation.z=ma;});
+  clockEl.textContent='Куранты · '+(h<10?'0':'')+h+':'+(m<10?'0':'')+m+' МСК · масштаб 1:1';
+}
+updateClock();setInterval(updateClock,10000);
+
+/* цикл */
+var visible=true,last=performance.now();
+if(window.IntersectionObserver)new IntersectionObserver(function(en){visible=en[0].isIntersecting;}).observe(viewer);
+setNight(false);
+msg.hidden=true;
+renderer.shadowMap.needsUpdate=true;
+var fp=flag.geometry.attributes.position;
+function loop(now){
+  requestAnimationFrame(loop);
+  var dt=Math.min(0.1,(now-last)/1000);last=now;
+  if(!visible||document.hidden)return;
+  stepAnim(now);if(!anim)controls.update();
+  if(camera.position.y<1.2)camera.position.y=1.2;
+  PEOPLE.step(dt);
+  var t=now/1000;
+  for(var i=0;i<fp.count;i++){var x=flagBase[i*3];fp.setZ(i,Math.sin(x*0.9-t*3.2)*0.35*(x/6)+Math.sin(x*2.1-t*5)*0.08*(x/6));}
+  fp.needsUpdate=true;flag.geometry.computeVertexNormals();
+  STARS.forEach(function(s,i){s.rotation.y=Math.sin(t*0.15+i)*0.6;});
+  renderer.render(scene,camera);
+}
+requestAnimationFrame(loop);
+}
+})();
+</script>
+
+</body></html>
